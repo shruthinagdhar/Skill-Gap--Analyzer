@@ -1,240 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Resume Skill Analyzer</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-
-<style>
-body{
-background: linear-gradient(135deg,#141e30,#243b55,#00c6ff);
-min-height:100vh;
-font-family:'Segoe UI';
-color:white;
-}
-.glass{
-background:rgba(255,255,255,0.12);
-backdrop-filter:blur(18px);
-border-radius:20px;
-padding:30px;
-width:50%;
-margin:auto;
-margin-top:80px;
-box-shadow:0 10px 40px rgba(0,0,0,0.4);
-}
-.hidden{display:none;}
-.progress{height:25px;font-weight:bold;}
-
-</style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillBridge AI — v3.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<!-- PDF.js for reading PDF resumes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+ <link rel="stylesheet" href="style.css"/>
 </head>
-
 <body>
-<div class="container">
+<div id="cur"></div>
+<div id="curR"></div>
+<canvas id="pc"></canvas>
 
-<!-- LOGIN -->
-<div id="loginPage" class="glass">
-<h3>Login</h3>
-<input id="loginUser" class="form-control" placeholder="Email">
-<input id="loginPass" type="password" class="form-control mt-2" placeholder="Password">
-<button class="btn btn-primary w-100 mt-2" onclick="login()">Login</button>
-<p class="mt-2">New? <a href="#" onclick="showSignup()" style="color:coral">Signup</a></p>
+<!-- LOADING OVERLAY -->
+<div id="ov">
+  <div style="position:relative;width:80px;height:80px;">
+    <div class="ov-ring"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.8rem;" id="ov-ico">🧠</div>
+  </div>
+  <div style="font-weight:700;font-size:1rem;color:var(--m2);" id="ovT">Analyzing resume...</div>
+  <div class="ov-steps" id="ov-steps"></div>
+  <div class="ov-prog-wrap"><div class="ov-prog-fill" id="ov-bar"></div></div>
 </div>
 
-<!-- SIGNUP -->
-<div id="signupPage" class="glass hidden">
-<h3>Signup</h3>
-<input id="newUser" class="form-control" placeholder="Email">
-<input id="newPass" type="password" class="form-control mt-2" placeholder="Password">
-<button class="btn btn-primary w-100 mt-2" onclick="signup()">Signup</button>
-<p class="mt-2"><a href="#" onclick="showLogin()" style="color:coral">Back to Login</a></p>
+<!-- TOAST -->
+<div id="toast"></div>
+
+<div class="app">
+
+<!-- ══════════ LANDING ══════════ -->
+<div class="page active" id="pg-land">
+  <nav class="nav">
+    <div class="logo">Skill<em>Bridge</em> AI</div>
+    <div class="nr">
+      <button class="btn btn-ghost" onclick="go('pg-login')">Sign In</button>
+      <button class="btn btn-cyan" onclick="go('pg-signup')">Get Started Free →</button>
+    </div>
+  </nav>
+  <section class="hero">
+    <div class="eyebrow"><div class="edot"></div> AI-Powered · Real Resume Reading</div>
+    <h1 class="hero-h1"><span class="r1">Bridge the Skills.</span><span class="r2">Secure the Future.</span></h1>
+    <p class="hero-p">Upload your resume, compare against any job role, and get a personalized skill gap report with an AI-generated week-by-week learning roadmap and course recommendations.</p>
+    <div class="hero-cta">
+      <button class="btn btn-cyan btn-lg" onclick="go('pg-signup')">🚀 Analyze My Resume Free</button>
+      <button class="btn btn-outline btn-lg" onclick="go('pg-login')">Sign In →</button>
+    </div>
+    <div class="stats-band">
+      <div class="scc"><div class="sn">94%</div><div class="sl">NLP Accuracy</div></div>
+      <div class="scc"><div class="sn">12K+</div><div class="sl">Courses Indexed</div></div>
+      <div class="scc"><div class="sn">50K+</div><div class="sl">Careers Helped</div></div>
+      <div class="scc"><div class="sn">3×</div><div class="sl">Faster Placement</div></div>
+    </div>
+  </section>
+  <div class="lsec" style="padding-top:0;">
+    <div class="stag">How It Works</div>
+    <h2 class="sh2">From Resume to <span class="gt">Hired</span> — 4 Steps</h2>
+    <p class="sp">AI reads your actual resume text — not keyword matching. Real intelligence, real results.</p>
+    <div class="steps-flow">
+      <div class="sf" data-n="01"><div class="sfi">📄</div><div class="sft">Upload Resume</div><div class="sfd">PDF, TXT, or DOCX. AI reads the full content and understands your experience.</div></div>
+      <div class="sf" data-n="02"><div class="sfi">🎯</div><div class="sft">Select or Type Role</div><div class="sfd">Choose from preset roles or type any custom job title for precision analysis.</div></div>
+      <div class="sf" data-n="03"><div class="sfi">🤖</div><div class="sft">AI Gap Analysis</div><div class="sfd">AI compares your skills to role requirements and scores you across 6 dimensions.</div></div>
+      <div class="sf" data-n="04"><div class="sfi">🎓</div><div class="sft">Get Your Roadmap</div><div class="sfd">Personalized week-by-week plan with courses and certifications targeting YOUR gaps.</div></div>
+    </div>
+  </div>
+  <div class="lsec" style="padding-top:0;">
+    <div class="stag">Features</div>
+    <h2 class="sh2">Everything to <span class="gt">Get You Hired</span></h2>
+    <div class="bento-grid br1 card" style="margin-bottom:13px;padding:0;background:none;border:none;">
+      <div class="bc card ba"><div class="bi">🧠</div><h3>Smart Skill Extraction</h3><p>NLP reads your full resume — detecting tech skills, frameworks, tools, and soft skills from project descriptions and experience.</p></div>
+      <div class="bc card bv"><div class="bi">📊</div><h3>Visual Gap Report</h3><p>Interactive match ring, category bars, and color-coded chips show exactly where you stand at a glance.</p></div>
+      <div class="bc card be"><div class="bi">🗺️</div><h3>Custom Roadmap</h3><p>AI-generated week-by-week plan calibrated to YOUR specific missing skills — not a template everyone gets.</p></div>
+    </div>
+    <div class="bento-grid br2 card" style="padding:0;background:none;border:none;">
+      <div class="bc card be"><div class="bi">⚡</div><h3>Instant Analysis</h3><p>Upload resume, pick role, get full report. Works with PDF, TXT, and DOCX formats.</p></div>
+      <div class="bc card bv"><div class="bi">🏆</div><h3>Cert Recommendations</h3><p>Industry-ranked certifications sorted by hiring demand, specific to your target role.</p></div>
+      <div class="bc card ba"><div class="bi">🤖</div><h3>AI Career Coach</h3><p>Ask anything — built-in AI coach knows your actual skills, gaps, and gives personalized advice.</p></div>
+    </div>
+  </div>
+  <div style="text-align:center;padding:32px;color:var(--m);font-size:.78rem;border-top:1px solid var(--b);">
+    Built for KLH University Hackathon 2025 · SkillBridge AI v3.0 · Real PDF + Text Resume Analysis
+  </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="glass hidden">
-
-<div class="d-flex justify-content-between">
-<h3>AI Resume Skill Analyzer</h3>
-<button class="btn btn-danger" onclick="logout()">Logout</button>
+<!-- ══════════ LOGIN ══════════ -->
+<div class="page" id="pg-login">
+  <nav class="nav"><div class="logo">Skill<em>Bridge</em> AI</div><div class="nr"><button class="btn btn-ghost" onclick="go('pg-land')">← Back</button></div></nav>
+  <div style="min-height:calc(100vh - 66px);display:flex;align-items:center;justify-content:center;padding:40px 24px;">
+    <div class="card" style="width:100%;max-width:440px;padding:44px 40px;">
+      <h2 style="font-weight:900;font-size:1.65rem;letter-spacing:-.03em;margin-bottom:5px;">Welcome back 👋</h2>
+      <p style="color:var(--m2);font-size:.86rem;margin-bottom:28px;">Don't have an account? <a style="color:var(--c1);cursor:pointer;font-weight:600;" onclick="go('pg-signup')">Sign up free →</a></p>
+      <div style="display:flex;gap:9px;margin-bottom:16px;">
+        <button class="sbtn" onclick="ql('Google')"><svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Google</button>
+        <button class="sbtn" onclick="ql('LinkedIn')"><svg width="15" height="15" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> LinkedIn</button>
+      </div>
+      <div class="adiv">or with email</div>
+      <div class="field"><label>Email</label><input class="inp" type="email" placeholder="you@example.com" id="li-e"/></div>
+      <div class="field"><label>Password</label><input class="inp" type="password" placeholder="••••••••" id="li-p"/></div>
+      <button class="btn btn-cyan btn-full btn-lg" onclick="doLogin()" style="margin-top:4px;">Sign In to Dashboard →</button>
+    </div>
+  </div>
 </div>
 
-<label class="mt-3">Upload Resume (PDF or TXT)</label>
-<input type="file" id="resumeFile" class="form-control">
-
-<label class="mt-3">Paste Job Description</label>
-<textarea id="jobDesc" class="form-control" rows="5"
-placeholder="Example: Backend developer with Java, Spring Boot, SQL, REST API"></textarea>
-
-<button class="btn btn-light w-100 mt-3" onclick="analyze()">Analyze</button>
-
-<div id="result" class="hidden mt-4">
-<h5>Skill Match Score</h5>
-<div class="progress mb-3">
-<div id="scoreBar" class="progress-bar bg-success">0%</div>
+<!-- ══════════ SIGNUP ══════════ -->
+<div class="page" id="pg-signup">
+  <nav class="nav"><div class="logo">Skill<em>Bridge</em> AI</div><div class="nr"><button class="btn btn-ghost" onclick="go('pg-land')">← Back</button></div></nav>
+  <div style="min-height:calc(100vh - 66px);display:flex;align-items:center;justify-content:center;padding:40px 24px;">
+    <div class="card" style="width:100%;max-width:480px;padding:44px 40px;">
+      <h2 style="font-weight:900;font-size:1.65rem;letter-spacing:-.03em;margin-bottom:5px;">Start your journey 🚀</h2>
+      <p style="color:var(--m2);font-size:.86rem;margin-bottom:28px;">Free forever · No credit card needed · Already have an account? <a style="color:var(--c1);cursor:pointer;font-weight:600;" onclick="go('pg-login')">Sign in</a></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field"><label>First Name</label><input class="inp" placeholder="Arjun" id="su-f"/></div>
+        <div class="field"><label>Last Name</label><input class="inp" placeholder="Reddy" id="su-l"/></div>
+      </div>
+      <div class="field"><label>Email</label><input class="inp" type="email" placeholder="you@example.com" id="su-e"/></div>
+      <div class="field"><label>Password</label><input class="inp" type="password" placeholder="Create a strong password" id="su-p"/></div>
+      <div class="field"><label>Target Role (optional)</label>
+        <select class="inp" id="su-r">
+          <option value="">Select or type below...</option>
+          <option>Full Stack Developer</option><option>Data Scientist</option><option>ML Engineer</option>
+          <option>DevOps Engineer</option><option>Cloud Architect</option><option>Cybersecurity Analyst</option>
+          <option>Product Manager</option><option>UI/UX Designer</option><option>Backend Developer</option>
+          <option>Frontend Developer</option><option>Android Developer</option><option>iOS Developer</option>
+          <option>Data Engineer</option><option>QA Engineer</option><option>Blockchain Developer</option>
+        </select>
+      </div>
+      <button class="btn btn-cyan btn-full btn-lg" onclick="doSignup()">Create Free Account →</button>
+    </div>
+  </div>
 </div>
 
-<h5>Required Skills</h5>
-<ul id="requiredSkills"></ul>
+<!-- ══════════ DASHBOARD ══════════ -->
+<div class="page" id="pg-dash">
+  <nav class="nav">
+    <div class="logo">Skill<em>Bridge</em> AI</div>
+    <div class="nr" style="gap:12px;">
+      <div style="font-size:.78rem;color:var(--m2);" id="du"></div>
+      <div class="av" id="dav">?</div>
+      <button class="btn btn-ghost" onclick="go('pg-land')">Log Out</button>
+    </div>
+  </nav>
+  <div class="db">
+    <nav class="sidebar">
+      <div class="slbl">Main</div>
+      <div class="si on" onclick="sec('ov',this)"><span class="ic">🏠</span>Overview</div>
+      <div class="si" onclick="sec('az',this)"><span class="ic">🔍</span>Skill Analyzer</div>
+      <div class="si" onclick="sec('res',this)"><span class="ic">📊</span>Gap Report</div>
+      <div class="slbl">Learning</div>
+      <div class="si" onclick="sec('ac',this)"><span class="ic">🎓</span>Academy<span class="sbadge">12</span></div>
+      <div class="si" onclick="sec('rm',this)"><span class="ic">🗺️</span>My Roadmap</div>
+      <div class="si" onclick="sec('ai',this)"><span class="ic">🤖</span>AI Coach</div>
+      <div class="slbl">Account</div>
+      <div class="si" onclick="sec('pr',this)"><span class="ic">👤</span>Profile</div>
+      <div class="su">
+        <div class="su-av" id="sb-av">?</div>
+        <div><div class="su-n" id="sb-nm">User</div><div class="su-r">🟢 Active</div></div>
+      </div>
+    </nav>
+    <main class="main">
 
-<h5>Missing Skills</h5>
-<ul id="missingSkills"></ul>
+      <!-- OVERVIEW -->
+      <div class="sect on" id="sect-ov">
+        <div class="ph"><h2>Good morning, <span class="ac" id="gname">there</span> 👋</h2><p>Your career readiness snapshot</p></div>
+        <div id="ov-empty" class="empty-state">
+          <div class="ei">🔍</div>
+          <h3>No analysis yet</h3>
+          <p>Upload your resume and select a target role to get your personalized skill gap report, AI-generated roadmap, and course recommendations.</p>
+          <button class="btn btn-cyan" style="margin-top:16px;" onclick="sec('az',null)">🚀 Start First Analysis</button>
+        </div>
+        <div id="ov-data" style="display:none;">
+          <div class="kstrip">
+            <div class="kpi" style="background:rgba(0,229,255,.04);border-color:rgba(0,229,255,.14);">
+              <div class="kglow" style="background:var(--c1);"></div>
+              <div class="kico">🎯</div><div class="kv gt" id="ov-s">—</div>
+              <div class="kl">Skill Match Score</div><div class="kt up" id="ov-st">Based on resume</div>
+            </div>
+            <div class="kpi" style="background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.14);">
+              <div class="kglow" style="background:var(--red);"></div>
+              <div class="kico">⚠️</div><div class="kv" style="color:#f87171" id="ov-m">—</div>
+              <div class="kl">Missing Skills</div><div class="kt dn" id="ov-mt">Skills to acquire</div>
+            </div>
+            <div class="kpi" style="background:rgba(16,185,129,.04);border-color:rgba(16,185,129,.14);">
+              <div class="kglow" style="background:var(--c4);"></div>
+              <div class="kico">✅</div><div class="kv" style="color:var(--c4)" id="ov-k">—</div>
+              <div class="kl">Skills Matched</div><div class="kt up">In your resume</div>
+            </div>
+            <div class="kpi" style="background:rgba(245,158,11,.04);border-color:rgba(245,158,11,.14);">
+              <div class="kglow" style="background:var(--c5);"></div>
+              <div class="kico">⏱️</div><div class="kv" style="color:var(--c5)" id="ov-wk">—</div>
+              <div class="kl">Est. Weeks to Ready</div><div class="kt wa">At 10 hrs/week</div>
+            </div>
+          </div>
+          <div class="g2" style="margin-bottom:15px;">
+            <div class="sc2 card"><h3>🏆 Your Top Skills</h3><div id="ov-bars"></div></div>
+            <div class="sc2 card"><h3>⚡ Priority Gaps</h3><div id="ov-miss"></div></div>
+          </div>
+          <div class="sc2 card" style="padding:17px 20px;">
+            <h3 style="margin-bottom:11px;">Quick Actions</h3>
+            <div class="qa">
+              <button class="btn btn-cyan" onclick="sec('az',null)">🔍 New Scan</button>
+              <button class="btn btn-violet" onclick="sec('ac',null)">🎓 Browse Courses</button>
+              <button class="btn btn-outline" onclick="sec('res',null)">📊 Full Report</button>
+              <button class="btn btn-outline" onclick="sec('ai',null)">🤖 AI Coach</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<h5>Improvement Suggestions</h5>
-<ul id="suggestions"></ul>
-</div>
+      <!-- ANALYZER -->
+      <div class="sect" id="sect-az">
+        <div class="ph"><h2>🔍 Skill Gap Analyzer</h2><p>AI reads your actual resume text — works with PDF, TXT, and DOCX</p></div>
+        <div class="stepsbar">
+          <div class="stn"><div class="stc act" id="s1">1</div><div class="stl act" id="sl1">Upload</div></div>
+          <div class="stline" id="ln1"></div>
+          <div class="stn"><div class="stc" id="s2">2</div><div class="stl" id="sl2">Role</div></div>
+          <div class="stline" id="ln2"></div>
+          <div class="stn"><div class="stc" id="s3">3</div><div class="stl" id="sl3">Analyze</div></div>
+          <div class="stline" id="ln3"></div>
+          <div class="stn"><div class="stc" id="s4">4</div><div class="stl" id="sl4">Results</div></div>
+        </div>
 
-</div>
-</div>
+        <!-- UPLOAD -->
+        <div class="card" style="padding:22px;margin-bottom:20px;">
+          <h3 style="font-weight:800;font-size:.98rem;margin-bottom:14px;">📄 Upload Your Resume <span style="font-weight:400;font-size:.78rem;color:var(--m);">— Required</span></h3>
+          <div class="uzone" id="uz" onclick="document.getElementById('rf').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="onDrop(event)">
+            <input type="file" id="rf" accept=".pdf,.txt,.doc,.docx" onchange="onFile(this)" style="display:none"/>
+            <span class="uico" id="uico">📄</span>
+            <h3 id="utitle">Drop your resume here or click to browse</h3>
+            <p id="udesc">Supports PDF · TXT · DOCX — up to 10 MB</p>
+            <div class="fmt-row">
+              <span class="fmt">.pdf</span><span class="fmt">.txt</span><span class="fmt">.docx</span><span class="fmt">.doc</span>
+            </div>
+          </div>
+          <div id="resume-preview" style="display:none;margin-top:14px;padding:12px 15px;border-radius:11px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);font-size:.8rem;color:var(--m2);">
+            <strong style="color:var(--c4);">✅ Resume loaded —</strong> <span id="resume-chars"></span> characters extracted
+          </div>
+        </div>
 
-<script>
+        <!-- JOB ROLE -->
+        <div class="card" style="padding:22px;margin-bottom:20px;">
+          <h3 style="font-weight:800;font-size:.98rem;margin-bottom:14px;">💼 Select Target Job Role</h3>
+          <div class="jgrid" id="jgrid">
+            <div class="jc" onclick="pj(this,'Full Stack Developer')">💻 Full Stack Dev</div>
+            <div class="jc" onclick="pj(this,'Data Scientist')">📊 Data Scientist</div>
+            <div class="jc" onclick="pj(this,'ML Engineer')">🤖 ML Engineer</div>
+            <div class="jc" onclick="pj(this,'DevOps Engineer')">⚙️ DevOps Engineer</div>
+            <div class="jc" onclick="pj(this,'Cloud Architect')">☁️ Cloud Architect</div>
+            <div class="jc" onclick="pj(this,'Cybersecurity Analyst')">🔒 Cybersecurity</div>
+            <div class="jc" onclick="pj(this,'Product Manager')">🎯 Product Manager</div>
+            <div class="jc" onclick="pj(this,'UI/UX Designer')">🎨 UI/UX Designer</div>
+            <div class="jc" onclick="pj(this,'Backend Developer')">🗄️ Backend Dev</div>
+            <div class="jc" onclick="pj(this,'Frontend Developer')">🖥️ Frontend Dev</div>
+            <div class="jc" onclick="pj(this,'Android Developer')">📱 Android Dev</div>
+            <div class="jc" onclick="pj(this,'Data Engineer')">🔧 Data Engineer</div>
+            <div class="jc" onclick="pj(this,'QA Engineer')">🧪 QA Engineer</div>
+            <div class="jc" onclick="pj(this,'Blockchain Developer')">⛓️ Blockchain</div>
+            <div class="jc" onclick="pj(this,'iOS Developer')">🍎 iOS Dev</div>
+            <div class="jc" onclick="pj(this,'Site Reliability Engineer')">🛠️ SRE</div>
+          </div>
+          <!-- CUSTOM ROLE INPUT -->
+          <div style="margin-top:8px;">
+            <label style="display:block;font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin-bottom:7px;">Or Type a Custom Role</label>
+            <div class="custom-role-row">
+              <input class="inp" id="custom-role" placeholder="e.g. Embedded Systems Engineer, NLP Researcher, Game Developer..." style="flex:1;border-radius:12px;"/>
+              <button class="btn btn-violet" onclick="setCustomRole()" style="flex-shrink:0;border-radius:12px;">Set Role →</button>
+            </div>
+            <div id="role-badge" style="display:none;margin-top:6px;padding:8px 14px;border-radius:50px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);display:inline-flex;align-items:center;gap:8px;font-size:.82rem;font-weight:600;color:var(--c1);">
+              <span>🎯 Target:</span><span id="role-badge-text"></span>
+              <span onclick="clearRole()" style="cursor:pointer;color:var(--m2);font-weight:400;">✕</span>
+            </div>
+          </div>
+        </div>
 
-/* GET DOM ELEMENTS SAFELY */
-const loginPage=document.getElementById("loginPage");
-const signupPage=document.getElementById("signupPage");
-const dashboardPage=document.getElementById("dashboardPage");
-const result=document.getElementById("result");
-const scoreBar=document.getElementById("scoreBar");
-const requiredSkills=document.getElementById("requiredSkills");
-const missingSkills=document.getElementById("missingSkills");
-const suggestions=document.getElementById("suggestions");
-const jobDesc=document.getElementById("jobDesc");
-const resumeFile=document.getElementById("resumeFile");
+        <!-- JD PASTE -->
+        <div class="card" style="padding:22px;margin-bottom:20px;">
+          <h3 style="font-weight:800;font-size:.98rem;margin-bottom:9px;">📋 Paste Job Description <span style="font-weight:400;font-size:.76rem;color:var(--m);">— Optional, boosts precision</span></h3>
+          <textarea class="inp" id="jdt" style="min-height:105px;" placeholder="Paste the job description here for hyper-precise analysis. The more detail, the better your results..."></textarea>
+        </div>
 
-/* LOGIN SYSTEM */
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-cyan btn-lg" onclick="runAn()">🤖 Analyze My Resume</button>
+          <button class="btn btn-outline btn-lg" onclick="runDemo()">⚡ Try Demo</button>
+          <span style="font-size:.76rem;color:var(--m);">Analysis takes ~10 seconds</span>
+        </div>
+        <div class="info-box" style="margin-top:14px;">
+          <strong>How it works:</strong> Your resume text is extracted in-browser (PDF.js for PDFs), then analyzed using intelligent skill matching against a database of 200+ skills per role — no server needed, 100% private.
+        </div>
+      </div>
 
-function showSignup(){
-loginPage.classList.add("hidden");
-signupPage.classList.remove("hidden");
-}
+      <!-- RESULTS -->
+      <div class="sect" id="sect-res">
+        <div class="ph"><h2>📊 Skill Gap Report</h2><p>Target: <span class="ac" id="rjob">—</span></p></div>
+        <div id="res-empty" class="empty-state">
+          <div class="ei">📊</div><h3>No report yet</h3>
+          <p>Run an analysis to see your personalized skill gap report.</p>
+          <button class="btn btn-cyan" style="margin-top:16px;" onclick="sec('az',null)">🔍 Go to Analyzer</button>
+        </div>
+        <div id="res-data" style="display:none;">
+          <div class="g2" style="margin-bottom:15px;">
+            <div class="sc2 card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+              <h3>Overall Match Score</h3>
+              <div class="rc">
+                <svg class="rsvg" width="176" height="176" viewBox="0 0 176 176">
+                  <circle class="rtk" cx="88" cy="88" r="70"/>
+                  <circle class="rp" id="rprog" cx="88" cy="88" r="70" stroke="url(#rg)" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+                  <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="50%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs>
+                </svg>
+                <div class="rab"><div class="rbig gt" id="rpct">—</div><div class="rsm">Match Rate</div></div>
+              </div>
+              <div style="display:flex;gap:20px;">
+                <div style="text-align:center;"><div style="font-weight:900;font-size:1.5rem;color:var(--c4);" id="rmn">—</div><div style="font-size:.7rem;color:var(--m2);">Matched</div></div>
+                <div style="text-align:center;"><div style="font-weight:900;font-size:1.5rem;color:#f87171;" id="rmiss">—</div><div style="font-size:.7rem;color:var(--m2);">Missing</div></div>
+                <div style="text-align:center;"><div style="font-weight:900;font-size:1.5rem;color:var(--c5);" id="rpart">—</div><div style="font-size:.7rem;color:var(--m2);">Partial</div></div>
+              </div>
+              <div id="score-verdict"></div>
+            </div>
+            <div class="sc2 card"><h3>📈 Category Breakdown</h3><div id="catbars"></div></div>
+          </div>
+          <div class="g2" style="margin-bottom:15px;">
+            <div class="sc2 card"><h3>❌ Missing Skills</h3><div class="chips" id="mchips"></div></div>
+            <div class="sc2 card"><h3>✅ Skills You Have</h3><div class="chips" id="okchips"></div></div>
+          </div>
+          <div id="partial-row" style="margin-bottom:15px;display:none;"><div class="sc2 card"><h3>🟡 Partial Skills</h3><div class="chips" id="partchips"></div></div></div>
+          <div class="sc2 card" style="margin-bottom:15px;"><h3>🎯 Recommended Learning Path</h3><div id="recs"></div></div>
+          <div class="sc2 card" style="margin-bottom:15px;padding:20px 22px;"><h3>💡 Insights</h3><div id="ai-insights" style="font-size:.86rem;color:var(--m2);line-height:1.8;"></div></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-cyan btn-lg" onclick="sec('ac',null)">🎓 Learning Academy</button>
+            <button class="btn btn-violet btn-lg" onclick="sec('rm',null)">🗺️ My Roadmap</button>
+            <button class="btn btn-outline btn-lg" onclick="sec('ai',null)">🤖 AI Coach</button>
+          </div>
+        </div>
+      </div>
 
-function showLogin(){
-signupPage.classList.add("hidden");
-loginPage.classList.remove("hidden");
-}
+      <!-- ACADEMY -->
+      <div class="sect" id="sect-ac">
+        <div class="ph"><h2>🎓 Learning Academy</h2><p>Curated courses to close your skill gaps</p></div>
+        <div class="ftrow">
+          <div class="ftab on" onclick="fC('all',this)">All Courses</div>
+          <div class="ftab" onclick="fC('free',this)">Free Only</div>
+          <div class="ftab" onclick="fC('cert',this)">Certifications</div>
+          <div class="ftab" onclick="fC('rec',this)">⭐ Recommended</div>
+        </div>
+        <div class="cgrid" id="cgrid"></div>
+      </div>
 
-function signup(){
-if(!newUser.value || !newPass.value){
-alert("Enter Email & Password");
-return;
-}
-localStorage.setItem(newUser.value,newPass.value);
-alert("Signup success!");
-showLogin();
-}
+      <!-- ROADMAP -->
+      <div class="sect" id="sect-rm">
+        <div class="ph"><h2>🗺️ My Learning Roadmap</h2><p>Personalized path to job-ready status</p></div>
+        <div id="rm-empty" class="empty-state">
+          <div class="ei">🗺️</div><h3>No roadmap yet</h3>
+          <p>Run an analysis to get your personalized roadmap based on your actual skill gaps.</p>
+          <button class="btn btn-cyan" style="margin-top:16px;" onclick="sec('az',null)">🔍 Go to Analyzer</button>
+        </div>
+        <div id="rmbody"></div>
+      </div>
 
-function login(){
-if(localStorage.getItem(loginUser.value)===loginPass.value){
-loginPage.classList.add("hidden");
-signupPage.classList.add("hidden");
-dashboardPage.classList.remove("hidden");
-}else alert("Wrong Email or Password");
-}
+      <!-- AI COACH -->
+      <div class="sect" id="sect-ai">
+        <div class="ph"><h2>🤖 AI Career Coach</h2><p>Intelligent career advice based on your resume analysis</p></div>
+        <div class="sc2 card" style="margin-bottom:14px;">
+          <h3>Chat with AI Coach</h3>
+          <div class="aiout" id="aiout">
+            <span style="color:var(--m2);">Hi! I'm your AI career coach — I know your skill gaps and target role.<br><br>
+            <span style="color:var(--c1);">Try asking:</span><br>
+            <span style="color:var(--c1);">• "What should I learn first?"</span><br>
+            <span style="color:var(--c1);">• "How long to close my skill gap?"</span><br>
+            <span style="color:var(--c1);">• "Which cert gives me best ROI?"</span><br>
+            <span style="color:var(--c1);">• "Am I competitive for this role?"</span></span>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:11px;">
+            <input class="inp" id="aiinp" placeholder="Ask your career question..." style="flex:1;" onkeydown="if(event.key==='Enter')sendAI()"/>
+            <button class="btn btn-cyan" onclick="sendAI()">Send →</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="pf('What are my top 3 missing skills and why should I prioritize them?')">Top gaps?</button>
+          <button class="btn btn-ghost btn-sm" onclick="pf('Create a 4-week study plan for my highest priority skill.')">Study plan</button>
+          <button class="btn btn-ghost btn-sm" onclick="pf('Which certification should I pursue first for my target role?')">Best cert?</button>
+          <button class="btn btn-ghost btn-sm" onclick="pf('Am I competitive for my target role right now?')">Am I ready?</button>
+          <button class="btn btn-ghost btn-sm" onclick="pf('What projects should I build to show my skills?')">Project ideas?</button>
+        </div>
+      </div>
 
-function logout(){
-location.reload();
-}
+      <!-- PROFILE -->
+      <div class="sect" id="sect-pr">
+        <div class="ph"><h2>👤 My Profile</h2><p>Account and career stats</p></div>
+        <div class="g2">
+          <div class="sc2 card">
+            <h3>Personal Details</h3>
+            <div class="field"><label>Full Name</label><input class="inp" id="pn"/></div>
+            <div class="field"><label>Email</label><input class="inp" type="email" id="pe"/></div>
+            <div class="field"><label>Target Role</label><input class="inp" id="pr2"/></div>
+            <div class="field"><label>Experience Level</label>
+              <select class="inp"><option>Fresher (0–1 yr)</option><option selected>1–3 years</option><option>3–5 years</option><option>5+ years</option></select>
+            </div>
+            <div class="field"><label>College / University</label><input class="inp" value="KLH University, Hyderabad"/></div>
+            <button class="btn btn-cyan" onclick="toast('Profile saved!','suc')">Save Changes</button>
+          </div>
+          <div class="sc2 card">
+            <h3>Career Stats</h3>
+            <div class="pstat"><span class="psl">Analyses Run</span><span class="psv" id="ps-an">0</span></div>
+            <div class="pstat"><span class="psl">Best Match Score</span><span class="psv" style="color:var(--c4);" id="ps-sc">—</span></div>
+            <div class="pstat"><span class="psl">Skills Matched</span><span class="psv" id="ps-km">—</span></div>
+            <div class="pstat"><span class="psl">Skills to Learn</span><span class="psv" style="color:#f87171;" id="ps-miss">—</span></div>
+            <div class="pstat"><span class="psl">Target Role</span><span class="psv" style="color:var(--c1);" id="ps-role">—</span></div>
+            <div class="pstat"><span class="psl">Candidate Level</span><span class="psv" style="color:var(--c2);" id="ps-lvl">—</span></div>
+            <div class="pstat"><span class="psl">Est. Weeks to Ready</span><span class="psv" style="color:var(--c5);" id="ps-wk">—</span></div>
+          </div>
+        </div>
+      </div>
 
-/* ROLE BASED SKILLS */
-
-const roleSkills={
-backend:["java","spring","spring boot","python","django","node","sql","mysql","mongodb","rest api","git","docker"],
-frontend:["html","css","javascript","bootstrap","react","angular","vue","responsive design","figma"],
-datascience:["python","machine learning","pandas","numpy","tensorflow","statistics","sql"]
-};
-
-function detectRole(text){
-text=text.toLowerCase();
-if(text.includes("backend")) return "backend";
-if(text.includes("frontend")) return "frontend";
-if(text.includes("data")) return "datascience";
-return "backend";
-}
-
-/* ANALYZE */
-
-async function analyze(){
-
-let jobText=jobDesc.value.toLowerCase();
-if(jobText===""){alert("Enter job description");return;}
-
-let role=detectRole(jobText);
-let required=roleSkills[role];
-
-let resume="";
-let file=resumeFile.files[0];
-
-if(file){
-let reader=new FileReader();
-
-reader.onload=async function(){
-
-if(file.name.endsWith(".pdf")){
-let pdf=await pdfjsLib.getDocument({data:new Uint8Array(this.result)}).promise;
-for(let i=1;i<=pdf.numPages;i++){
-let page=await pdf.getPage(i);
-let txt=await page.getTextContent();
-resume+=txt.items.map(x=>x.str).join(" ");
-}
-process(resume.toLowerCase(),required);
-
-}else process(this.result.toLowerCase(),required);
-
-};
-
-if(file.name.endsWith(".pdf")) reader.readAsArrayBuffer(file);
-else reader.readAsText(file);
-
-}else process("",required);
-}
-
-/* PROCESS */
-
-function process(resume,required){
-
-let missing=required.filter(skill=>!resume.includes(skill));
-let score=Math.floor(((required.length-missing.length)/required.length)*100);
-
-result.classList.remove("hidden");
-scoreBar.style.width=score+"%";
-scoreBar.innerText=score+"%";
-
-requiredSkills.innerHTML=required.map(x=>`<li>${x}</li>`).join("");
-
-missingSkills.innerHTML=
-missing.length?
-missing.map(x=>`<li>${x}</li>`).join("")
-:"<li>No Missing Skills 🎉</li>";
-
-suggestions.innerHTML=missing.map(skill=>`
-<li>
-<b>${skill}</b>
-<ul>
-<li>Take certification course</li>
-<li>Build 2 projects</li>
-<li>Upload to GitHub</li>
-<li>Add to resume</li>
-<li>Practice interviews</li>
-</ul>
-</li>`).join("");
-
-// SAVE FOR ACADEMY PAGE
-localStorage.setItem("missingSkills", JSON.stringify(missing));
-
-// ADD BUTTON (no duplication)
-suggestions.innerHTML += `
-<div class="mt-3">
-<button class="btn btn-warning w-100" onclick="goAcademy()">
-View Recommended Courses
-</button>
-</div>`;
-}
-
-function goAcademy(){
-window.location.href="academy.html";
-}
-
-</script>
+    </main>
+  </div>
+</div><!-- /pg-dash -->
+</div><!-- /app -->
+<script src ="script.js"></script>
 </body>
 </html>
